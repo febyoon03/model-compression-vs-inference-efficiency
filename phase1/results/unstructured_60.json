@@ -1,0 +1,22 @@
+{
+  "run_type": "pilot_feasibility",
+  "id": "U60",
+  "method": "Unstructured 60%",
+  "compression": "60%",
+  "fine_tuned": true,
+  "fine_tuning_epochs": 3,
+  "top1_accuracy": 81.88,
+  "total_params": 11173962,
+  "nonzero_params": 4475351,
+  "theoretical_sparsity": 0.5994839610157973,
+  "sparsity_after_prune_weights": 0.5999999820858389,
+  "dense_file_size_mb": 42.69996166229248,
+  "latency_bs1_mean_ms": 5.130945417331532,
+  "latency_bs1_std_ms": 0.19821969250492674,
+  "latency_bs1_median_ms": 5.137687548995018,
+  "latency_bs32_mean_ms": 346.9777833856642,
+  "latency_bs32_std_ms": 9.302731624848835,
+  "latency_bs32_median_ms": 343.7448959448375,
+  "throughput_bs32": 92.22492485760147,
+  "note": "Dense tensors retained; zeros present but shape unchanged. Same FT budget. Median latency is primary."
+}

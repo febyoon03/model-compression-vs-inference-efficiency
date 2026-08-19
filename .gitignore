@@ -1,0 +1,11 @@
+# Generated at runtime — regenerate via each phase's README instructions
+phase1/data/
+phase1/checkpoints/
+phase1.5/paroquant/
+# Note: phase1/results/ and phase1.5/results/ ARE committed (real pilot output, kept as evidence)
+
+# OS / editor
+.DS_Store
+__pycache__/
+*.pyc
+.vscode/

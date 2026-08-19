@@ -1,0 +1,67 @@
+{
+  "run_type": "pilot_feasibility",
+  "method": "FP32 Baseline",
+  "id": "B",
+  "compression": "0%",
+  "fine_tuned": false,
+  "fine_tuning_epochs": 0,
+  "top1_accuracy": 76.92,
+  "total_params": 11173962,
+  "nonzero_params": 11173962,
+  "theoretical_sparsity": 0.0,
+  "dense_file_size_mb": 42.70044994354248,
+  "latency_bs1_mean_ms": 4.963838327676058,
+  "latency_bs1_std_ms": 0.1435832671532205,
+  "latency_bs1_median_ms": 5.023187550250441,
+  "latency_bs32_mean_ms": 343.19453252712265,
+  "latency_bs32_std_ms": 5.853432627188525,
+  "latency_bs32_median_ms": 342.50077104661614,
+  "throughput_bs32": 93.2415786590978,
+  "peak_memory_mb": 0.015625,
+  "training_epochs": 5,
+  "training_time_min": 128.02384466727574,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.9493426101287004,
+      "train_acc": 29.676,
+      "test_acc": 38.24,
+      "lr": 0.09045084971874738
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.4846051025878437,
+      "train_acc": 45.308,
+      "test_acc": 45.17,
+      "lr": 0.06545084971874737
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.169052317243098,
+      "train_acc": 58.092,
+      "test_acc": 60.11,
+      "lr": 0.03454915028125263
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.9020133006298329,
+      "train_acc": 67.84,
+      "test_acc": 69.08,
+      "lr": 0.009549150281252633
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.7088297075780151,
+      "train_acc": 75.026,
+      "test_acc": 76.92,
+      "lr": 0.0
+    }
+  ],
+  "hardware": {
+    "device": "cpu",
+    "cpu_threads": 8,
+    "torch_version": "2.13.0",
+    "note": "CPU inference focus"
+  },
+  "note": "Pilot run. Accuracy not to be interpreted as final research result. Median latency is primary."
+}

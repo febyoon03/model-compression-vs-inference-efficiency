@@ -1,0 +1,3 @@
+mlx
+mlx-lm
+# paroquant is not on PyPI - see README "How to run" for install-from-source steps
