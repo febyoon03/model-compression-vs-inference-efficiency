@@ -19,7 +19,7 @@ Full write-up for both phases: [`phase1/README.md`](phase1/README.md), [`phase1.
 | | Params/size change | Latency / throughput change |
 |---|---|---|
 | Structured pruning 40% | size -64% | latency -13% |
-| Structured pruning 60% | size -64% (6.88MB) | latency -45% (93→197 img/s) |
+| Structured pruning 60% | size -84% (6.88MB) | latency -45% (93→197 img/s) |
 | Unstructured pruning 40%/60% | nonzero params drop, but dense tensor shape unchanged → size ~unchanged | U40 is 86% **slower**; U60 roughly unchanged |
 | INT8 dynamic quantization | ~unchanged (42.70→42.69MB) | **6% slower** (93.2→87.3 img/s; only `Linear` layers convert, ResNet-18 is mostly `Conv2d`) |
 | ParoQuant INT4 (Qwen3-0.6B) | checkpoint -61% (1.4GB→550MB) | decode throughput **31% slower** (72.75→49.85 tok/s); TTFT ~unchanged |
