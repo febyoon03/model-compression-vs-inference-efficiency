@@ -1,44 +1,100 @@
 # Model Compression vs. Inference Efficiency
 
-Two small studies asking the same question on two different model families: does making a model smaller actually make it faster to run?
+Two small studies. Both ask the same question, with two different model families:
+
+**Does a smaller model actually run faster?**
 
 ## Motivation
 
-"Smaller model" and "faster model" get used almost interchangeably, but they aren't the same claim. Pruning removes parameters, quantization reduces bit-width, and both usually shrink a checkpoint on disk — but disk size, parameter count, and wall-clock latency are three different numbers that don't have to move together. This repo tests that gap directly on two very different setups: a CNN classifier (Phase 1) and a small LLM (Phase 1.5).
+"Smaller model" and "faster model" are not the same thing.
+
+Pruning removes parameters. Quantization uses fewer bits to store each weight. Both can shrink model size. But **parameter count, file size, and inference speed are three different things**.
+
+This project checks whether a smaller model is actually faster, in two settings:
+
+* **Phase 1:** CNN classifier (ResNet-18)
+* **Phase 1.5:** Small LLM (Qwen3-0.6B)
 
 ## Approach
 
-**Phase 1 — CIFAR-ResNet18 pruning and quantization.** A ResNet-18 (11.17M params) trained from scratch on CIFAR-10, then compressed five ways: unstructured pruning (40%/60%), structured pruning (40%/60%, with real channel removal and weight transfer), and INT8 post-training dynamic quantization. All pruning configs get the same 3-epoch fine-tuning budget. Every variant is measured for parameter count, on-disk size, and CPU/Apple Silicon (arm64) latency — not just accuracy.
+### Phase 1: ResNet-18 Pruning and Quantization
 
-**Phase 1.5 — Reproducing Z-Lab's ParoQuant.** A direct reproduction of Z-Lab's own open-source pairwise-rotation INT4 quantization method ([z-lab/paroquant](https://github.com/z-lab/paroquant), commit `f74a96c`), comparing Qwen3-0.6B FP16 against the official Qwen3-0.6B-PARO INT4 checkpoint on Apple Silicon with the MLX backend. This is a reproduction of their published method, not a new technique — see [Credits](#credits).
+Trained a ResNet-18 (11.17M parameters) from scratch on CIFAR-10.
 
-Full write-up for both phases: [`phase1/README.md`](phase1/README.md), [`phase1.5/README.md`](phase1.5/README.md). Raw pilot output for Phase 1 is committed under [`phase1/results/`](phase1/results/) rather than only summarized here.
+Tested five compression methods:
+
+* Unstructured pruning: 40%, 60%
+* Structured pruning: 40%, 60%
+* INT8 post-training dynamic quantization
+
+Each pruned model got the same fine-tuning budget: 3 epochs.
+
+For each model, measured:
+
+* Parameter count
+* Model size on disk
+* CPU / Apple Silicon latency
+* Accuracy
+
+Structured pruning removes whole channels. Unstructured pruning just zeroes out individual weights, one at a time.
+
+### Phase 1.5: Reproducing ParoQuant
+
+This phase reproduces Z-Lab's open-source method: pairwise-rotation INT4 quantization.
+
+Compared:
+
+* Qwen3-0.6B FP16
+* Qwen3-0.6B-PARO INT4
+
+Ran the benchmark on Apple Silicon, using the MLX backend.
+
+This is a reproduction of an existing method, not a new one. See [Credits](#credits).
+
+Full results:
+
+* [`phase1/README.md`](phase1/README.md)
+* [`phase1.5/README.md`](phase1.5/README.md)
+
+Raw pilot results for Phase 1: [`phase1/results/`](phase1/results/)
 
 ## Results
 
-| | Params/size change | Latency / throughput change |
-|---|---|---|
-| Structured pruning 40% | size -64% | latency -13% |
-| Structured pruning 60% | size -84% (6.88MB) | latency -45% (93→197 img/s) |
-| Unstructured pruning 40%/60% | nonzero params drop, but dense tensor shape unchanged → size ~unchanged | U40 is 86% **slower**; U60 roughly unchanged |
-| INT8 dynamic quantization | ~unchanged (42.70→42.69MB) | **6% slower** (93.2→87.3 img/s; only `Linear` layers convert, ResNet-18 is mostly `Conv2d`) |
-| ParoQuant INT4 (Qwen3-0.6B) | checkpoint -61% (1.4GB→550MB) | decode throughput **31% slower** (72.75→49.85 tok/s); TTFT ~unchanged |
+| Method | Size / Parameter Change | Inference Change |
+|---|---:|---:|
+| Structured pruning 40% | Size -64% | Latency -13% |
+| Structured pruning 60% | Size -84% (6.88MB) | Latency -45% (93 → 197 img/s) |
+| Unstructured pruning 40% / 60% | Fewer nonzero parameters, but same tensor shape | U40: 86% slower, U60: about unchanged |
+| INT8 dynamic quantization | 42.70 → 42.69MB | 6% slower (93.2 → 87.3 img/s) |
+| ParoQuant INT4 (Qwen3-0.6B) | 1.4GB → 550MB (-61%) | Decode 31% slower (72.75 → 49.85 tok/s) |
 
-Sparsity didn't predict speed in Phase 1, and bit-width didn't predict speed in Phase 1.5 — in both cases, the actual execution path/kernel support decided latency, not the compression ratio on paper. The unstructured-pruning and ParoQuant-INT4 numbers are the two most important rows in this table precisely because they're negative results.
+**Compression ratio alone does not predict speed.**
 
-## Tech stack
+In Phase 1, unstructured pruning cut the number of nonzero parameters, but the model was not faster. It's still dense under the hood. Structured pruning cut both size and latency, since it actually removes channels.
 
-Phase 1: Python, PyTorch, torchvision. Phase 1.5: Python, MLX, mlx-lm, ParoQuant (Z-Lab).
+In Phase 1.5, INT4 shrank the checkpoint by 61%. But decode speed was 31% slower than FP16.
 
-## How to run
+What matters most is how the compressed model actually runs: the tensor shape, and what the hardware can do with it.
 
-See each phase's own README for exact commands and environment setup — the two phases use unrelated stacks (PyTorch vs. MLX) and don't share a virtual environment.
+## Tech Stack
 
-## Limitations / what's next
+**Phase 1:** Python, PyTorch, torchvision
 
-- Phase 1.5's "why INT4 is slower at this scale" is a hypothesis (per-forward rotation+dequant overhead outweighing bandwidth savings at 0.6B), not something independently isolated in this repo — see that phase's README for the reasoning and what an isolating experiment would need.
-- Open question carried forward: at what model size / kernel implementation does pairwise-rotation INT4 actually cross over to being faster than FP16?
+**Phase 1.5:** Python, MLX, mlx-lm, ParoQuant (Z-Lab)
+
+## How to Run
+
+See each phase's README for exact commands and setup.
+
+The two phases use different frameworks. They don't share a virtual environment.
+
+## Limitations
+
+* Why INT4 is slower here is still just a hypothesis. Rotation and dequantization overhead might outweigh the bandwidth savings at this size (0.6B parameters). This wasn't tested directly in its own experiment.
+* Open question: at what model size, or with what kernel, does pairwise-rotation INT4 become faster than FP16?
 
 ## Credits
 
-Phase 1.5 reproduces Z-Lab's published ParoQuant method exactly (commit `f74a96c` of [z-lab/paroquant](https://github.com/z-lab/paroquant)) — the method and the `Qwen3-0.6B-PARO` checkpoint are theirs, not mine. This repo's contribution in that phase is the reproduction and the throughput/TTFT benchmark, not the compression technique itself.
+Phase 1.5 reproduces Z-Lab's ParoQuant method, using commit `f74a96c` of [`z-lab/paroquant`](https://github.com/z-lab/paroquant).
+
+The ParoQuant method and the `Qwen3-0.6B-PARO` checkpoint were made by Z-Lab. This project adds the reproduction and the throughput/TTFT benchmark, not the compression method itself.
